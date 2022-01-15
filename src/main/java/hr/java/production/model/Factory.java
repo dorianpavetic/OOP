@@ -2,12 +2,13 @@ package hr.java.production.model;
 
 import java.util.Arrays;
 
-public class Factory implements Displayable {
+public class Factory extends Printable implements Displayable {
     private String name;
     private Address address;
     private Item[] items;
 
-    public Factory(String name, Address address, Item[] items) {
+    public Factory(String name, Address address, Item[] items, Integer index) {
+        super(index);
         this.name = name;
         this.address = address;
         this.items = items;

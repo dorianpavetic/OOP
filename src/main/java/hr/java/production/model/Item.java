@@ -2,7 +2,7 @@ package hr.java.production.model;
 
 import java.math.BigDecimal;
 
-public class Item implements Displayable {
+public class Item extends Printable implements Displayable {
     private String name;
     private Category category;
     private BigDecimal width;
@@ -11,7 +11,8 @@ public class Item implements Displayable {
     private BigDecimal productionCost;
     private BigDecimal sellingPrice;
 
-    public Item(String name, Category category, BigDecimal width, BigDecimal height, BigDecimal length, BigDecimal productionCost, BigDecimal sellingPrice) {
+    public Item(String name, Category category, BigDecimal width, BigDecimal height, BigDecimal length, BigDecimal productionCost, BigDecimal sellingPrice, Integer index) {
+        super(index);
         this.name = name;
         this.category = category;
         this.width = width;

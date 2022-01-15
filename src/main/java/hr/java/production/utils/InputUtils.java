@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 public class InputUtils {
     //true = Skip field inputs
-    private static final boolean isMock = false;
+    private static final boolean isMock = true;
 
     private InputUtils() {
     }
@@ -45,11 +45,32 @@ public class InputUtils {
     }
 
     private static BigDecimal getNumberInput(Scanner scanner, String message) {
+        return getNumberInput(scanner, message, false);
+    }
+
+    private static BigDecimal getNumberInput(Scanner scanner, String message, boolean exitable) {
         String value = getStringInput(scanner, message);
         try {
-            return new BigDecimal(value);
+            BigDecimal input = new BigDecimal(value);
+            if(exitable) {
+                if(input.intValue() == -1)
+                    return input;
+                else
+                    return getForValidInput(scanner, message, input);
+            }
+            else
+                return getForValidInput(scanner, message, input);
         } catch (NumberFormatException e) {
             System.out.println("Wrong number input, must be number. Please repeat...");
+            return getNumberInput(scanner, message);
+        }
+    }
+
+    private static BigDecimal getForValidInput(Scanner scanner, String message, BigDecimal input) {
+        if (input.intValue() >= 1 && input.intValue() <= 1000)
+            return input;
+        else {
+            System.out.println("Number input must be in range [1, 1000]. Please repeat...");
             return getNumberInput(scanner, message);
         }
     }
@@ -76,28 +97,32 @@ public class InputUtils {
             message = message + ".. (for exit enter '-1')";
         System.out.println(message + ": ");
         for (int i = 0; i < list.size(); i++)
-            System.out.println(i + ". " + list.get(i).toShortString());
+            System.out.println((i + 1) + ". " + list.get(i).toShortString());
 
+        final Random random = new Random();
         int intValue = -1;
-        while (intValue > list.size() - 1 || intValue < 0) {
+        while (intValue > list.size() || intValue < 1) {
             if(isMock) {
-                if(exitable)
-                    intValue = new Random().nextInt(list.size() + 1) - 1; //Enable exit
+                if(exitable) {
+                    intValue = random.nextInt(list.size() + 1); //Enable exit
+                    if(random.nextBoolean())
+                        intValue = -1;
+                }
                 else
-                    intValue = new Random().nextInt(list.size());
+                    intValue = random.nextInt(list.size()) + 1;
                 System.out.println("Input: " + intValue);
                 if(intValue == -1)
                     return null;
                 continue;
             }
-            intValue = getNumberInput(scanner, "Input: ").intValue();
+            intValue = getNumberInput(scanner, "Input: ", true).intValue();
             if (exitable && intValue == -1)
                 return null;
-            if (intValue > list.size() - 1 || intValue < 0)
+            if (intValue > list.size() || intValue < 1)
                 System.out.println("Wrong index input, please repeat...");
         }
 
-        return list.get(intValue);
+        return list.get(intValue-1);
     }
 
     public static <T extends Displayable> List<T> getListSelectionInputs(Scanner scanner,

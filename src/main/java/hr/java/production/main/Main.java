@@ -1,7 +1,7 @@
 package hr.java.production.main;
 
-import hr.java.production.utils.InputUtils;
 import hr.java.production.model.*;
+import hr.java.production.utils.InputUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -15,30 +15,34 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        List<Category> categories = getCategoryInputs(scanner);
-        List<Item> items = getItemInputs(scanner, categories);
-        List<Factory> factories = getFactoryInputs(scanner, items);
-        List<Store> stores = getStoreInputs(scanner, items);
+        Category[] categories = getCategoryInputs(scanner);
+        Item[] items = getItemInputs(scanner, Arrays.asList(categories));
+        Factory[] factories = getFactoryInputs(scanner, Arrays.asList(items));
+        Store[] stores = getStoreInputs(scanner, Arrays.asList(items));
 
         System.out.println();
-        findLargestItemFactories(items, factories);
+        findLargestItemFactories(Arrays.asList(items), Arrays.asList(factories));
         System.out.println();
-        findCheapestItemStore(items, stores);
+        findCheapestItemStore(Arrays.asList(items), Arrays.asList(stores));
+        System.out.println();
+        getSortedCategories(Arrays.asList(categories), Arrays.asList(items));
     }
 
-    private static List<Category> getCategoryInputs(Scanner scanner) {
-        List<Category> categories = new ArrayList<>();
+    private static Category[] getCategoryInputs(Scanner scanner) {
+        Category[] categories = new Category[NUM_CATEGORY_INPUTS];
         for(int i = 0; i < NUM_CATEGORY_INPUTS; i++) {
+            BigDecimal index = InputUtils.getNumberInput(scanner, i, "category index: ");
             String name = InputUtils.getStringInput(scanner, i, "category name: ");
             String description = InputUtils.getStringInput(scanner, i, "category description: ");
-            categories.add(new Category(name, description));
+            categories[i] = new Category(name, description, index.intValue());
         }
         return categories;
     }
 
-    private static List<Item> getItemInputs(Scanner scanner, List<Category> categories) {
-        List<Item> items = new ArrayList<>();
+    private static Item[] getItemInputs(Scanner scanner, List<Category> categories) {
+        Item[] items = new Item[NUM_ITEM_INPUTS];
         for(int i = 0; i < NUM_ITEM_INPUTS; i++) {
+            BigDecimal index = InputUtils.getNumberInput(scanner, i, "item index: ");
             String name = InputUtils.getStringInput(scanner, i, "item name: ");
             BigDecimal width = InputUtils.getNumberInput(scanner, i, "item width: ");
             BigDecimal height = InputUtils.getNumberInput(scanner, i, "item height: ");
@@ -48,39 +52,42 @@ public class Main {
 
             Category category = InputUtils.getListSelectionInput(scanner, i, Item.class, categories, false);
 
-            Item item = new Item(name, category, width, height, length, productionCost, sellingPrice);
-            items.add(item);
+            Item item = new Item(name, category, width, height, length, productionCost, sellingPrice, index.intValue());
+            items[i] = item;
         }
         return items;
     }
 
-    private static List<Factory> getFactoryInputs(Scanner scanner, List<Item> items) {
-        List<Factory> factories = new ArrayList<>();
+    private static Factory[] getFactoryInputs(Scanner scanner, List<Item> items) {
+        Factory[] factories = new Factory[NUM_FACTORY_INPUTS];
         for(int i = 0; i < NUM_FACTORY_INPUTS; i++) {
+            BigDecimal index = InputUtils.getNumberInput(scanner, i, "factory index: ");
             String name = InputUtils.getStringInput(scanner, i, "factory name: ");
             Address address = getAddressInput(scanner, i, Factory.class);
             Item[] selectedItems = InputUtils.getListSelectionInputs(scanner, i, Factory.class, items).toArray(new Item[0]);
-            factories.add(new Factory(name, address, selectedItems));
+            factories[i] = new Factory(name, address, selectedItems, index.intValue());
         }
         return factories;
     }
 
     private static Address getAddressInput(Scanner scanner, int i, Class<?> addressForClass) {
+        BigDecimal index = InputUtils.getNumberInput(scanner, i, "address index: ");
         String addressFor = addressForClass.getSimpleName().toLowerCase();
         String street = InputUtils.getStringInput(scanner, i, addressFor + " address street: ");
         String houseNumber = InputUtils.getStringInput(scanner, i, addressFor + " house number: ");
         String city = InputUtils.getStringInput(scanner, i, addressFor + " address city: ");
         String postalCode = InputUtils.getStringInput(scanner, i, addressFor + " address postal code: ");
-        return new Address(street, houseNumber, city, postalCode);
+        return new Address(street, houseNumber, city, postalCode, index.intValue());
     }
 
-    private static List<Store> getStoreInputs(Scanner scanner, List<Item> items) {
-        List<Store> stores = new ArrayList<>();
+    private static Store[] getStoreInputs(Scanner scanner, List<Item> items) {
+        Store[] stores = new Store[NUM_STORE_INPUTS];
         for(int i = 0; i < NUM_STORE_INPUTS; i++) {
+            BigDecimal index = InputUtils.getNumberInput(scanner, i, "store index: ");
             String name = InputUtils.getStringInput(scanner, i, "store name: ");
             String webAddress = InputUtils.getStringInput(scanner, i, "store web address: ");
             Item[] selectedItems = InputUtils.getListSelectionInputs(scanner, i, Store.class, items).toArray(new Item[0]);
-            stores.add(new Store(name, webAddress, selectedItems));
+            stores[i] = new Store(name, webAddress, selectedItems, index.intValue());
         }
         return stores;
     }
@@ -130,6 +137,23 @@ public class Main {
                     cheapestItem.getName() + ", Selling price: " + cheapestItem.getSellingPrice() + "): ");
             for (int i = 0; i < cheapestItemStores.size(); i++)
                 System.out.println("\t" + (i+1) + ". " + cheapestItemStores.get(i).toShortString());
+        }
+    }
+
+    private static void getSortedCategories(List<Category> categories, List<Item> items) {
+        System.out.println("Sorted categories: ");
+        List<Category> categoryList = new ArrayList<>(categories); //Keep original items list, could be removed
+        categoryList.sort(Comparator.comparing(Category::getIndex));
+        for (int i = 0; i < categoryList.size(); i++) {
+            System.out.println("\t" + categoryList.get(i).toShortString());
+            System.out.println("\t\tItems for this category: ");
+            final int j = i;
+            List<Item> copyItems = new ArrayList<>(items);
+            List<Item> itemsForCategory = copyItems.stream()
+                    .filter(item -> item.getCategory().equals(categoryList.get(j)))
+                    .collect(Collectors.toList());
+            for(Item item : itemsForCategory)
+                System.out.println("\t\t\t - " + item.toShortString());
         }
     }
 }

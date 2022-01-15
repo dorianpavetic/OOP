@@ -1,10 +1,11 @@
 package hr.java.production.model;
 
-public class Category implements Displayable {
+public class Category extends Printable implements Displayable {
     private String name;
     private String description;
 
-    public Category(String name, String description) {
+    public Category(String name, String description, Integer index) {
+        super(index);
         this.name = name;
         this.description = description;
     }
@@ -37,6 +38,6 @@ public class Category implements Displayable {
 
     @Override
     public String toShortString() {
-        return toString();
+        return "" + getIndex() + ". " + this;
     }
 }
