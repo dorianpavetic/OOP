@@ -146,14 +146,20 @@ public class Main {
         categoryList.sort(Comparator.comparing(Category::getIndex));
         for (int i = 0; i < categoryList.size(); i++) {
             System.out.println("\t" + categoryList.get(i).toShortString());
-            System.out.println("\t\tItems for this category: ");
             final int j = i;
             List<Item> copyItems = new ArrayList<>(items);
             List<Item> itemsForCategory = copyItems.stream()
                     .filter(item -> item.getCategory().equals(categoryList.get(j)))
                     .collect(Collectors.toList());
+
+            if(itemsForCategory.isEmpty()) {
+                System.out.println("\t\t- No items of this category");
+                continue;
+            }
+
+            System.out.println("\t\t- Items for this category: ");
             for(Item item : itemsForCategory)
-                System.out.println("\t\t\t - " + item.toShortString());
+                System.out.println("\t\t\t --> " + item.toShortString());
         }
     }
 }
