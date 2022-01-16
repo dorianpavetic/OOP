@@ -57,6 +57,8 @@ public class Main {
             Category category = InputUtils.getListSelectionInput(scanner, i, Item.class, categories, false);
             BigDecimal productionCost = InputUtils.getNumberInput(scanner, i, "item production cost: ");
             BigDecimal sellingPrice = InputUtils.getNumberInput(scanner, i, "item selling price: ");
+            BigDecimal discountInput = InputUtils.getNumberInput(scanner, i, "item discount: ", 0, 100);
+            Discount discount = new Discount(discountInput);
 
             final Item item;
             BigDecimal width = BigDecimal.ZERO;
@@ -67,14 +69,14 @@ public class Main {
                 height = InputUtils.getNumberInput(scanner, i, "item height: ");
                 length = InputUtils.getNumberInput(scanner, i, "item length: ");
 
-                item = new Item(name, category, width, height, length, productionCost, sellingPrice);
+                item = new Item(name, category, width, height, length, productionCost, sellingPrice, discount);
             }
             else {
                 BigDecimal weight = InputUtils.getNumberInput(scanner, i, "item weight: ");
                 if(foodSelection.equals(Pasta.class.getSimpleName()))
-                    item = new Pasta(name, category, width, height, length, productionCost, sellingPrice, weight);
+                    item = new Pasta(name, category, width, height, length, productionCost, sellingPrice, discount, weight);
                 else
-                    item = new Pork(name, category, width, height, length, productionCost, sellingPrice, weight);
+                    item = new Pork(name, category, width, height, length, productionCost, sellingPrice, discount, weight);
 
                 Edible edible = (Edible) item;
                 System.out.println("Entered food item has " + edible.calculateKilocalories() + " kilokalorija.");

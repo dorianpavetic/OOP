@@ -4,6 +4,7 @@ import hr.java.production.main.Main;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 
 public class Pasta extends Item implements Edible {
     private static final int CAL_PER_KG = 100;
@@ -11,8 +12,8 @@ public class Pasta extends Item implements Edible {
     private BigDecimal weight;
 
     public Pasta(String name, Category category, BigDecimal width, BigDecimal height,
-                 BigDecimal length, BigDecimal productionCost, BigDecimal sellingPrice, BigDecimal weight) {
-        super(name, category, width, height, length, productionCost, sellingPrice);
+                 BigDecimal length, BigDecimal productionCost, BigDecimal sellingPrice, Discount discount, BigDecimal weight) {
+        super(name, category, width, height, length, productionCost, sellingPrice, discount);
         this.weight = weight;
     }
 
@@ -31,7 +32,8 @@ public class Pasta extends Item implements Edible {
 
     @Override
     public BigDecimal calculatePrice() {
-        return getSellingPrice().multiply(weight);
+        BigDecimal discount = getDiscount().discountAmount().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN);
+        return getSellingPrice().multiply(weight).multiply(new BigDecimal(1).subtract(discount));
     }
 
     @Override
