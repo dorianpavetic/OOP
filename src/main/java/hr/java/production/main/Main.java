@@ -190,9 +190,9 @@ public class Main {
                         .orElse(null);
 
         if(highestCaloriesEdible != null) {
-            System.out.println("Highest calories edible item:");
+            System.out.println("Highest calories edible item: ");
             System.out.println("\t- " + highestCaloriesEdible);
-            System.out.println("Most expensive edible item:");
+            System.out.println("Most expensive edible item: ");
             System.out.println("\t- " + mostExpensiveEdible);
         }
         else
