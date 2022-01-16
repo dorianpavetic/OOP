@@ -4,6 +4,7 @@ import hr.java.production.model.*;
 import hr.java.production.utils.InputUtils;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,8 @@ public class Main {
         findCheapestItemStore(Arrays.asList(items), Arrays.asList(stores));
         System.out.println();
         printEdiblesInfo(List.of(items));
+        System.out.println();
+        printShortestWarrantyDurationTechnical(List.of(items));
     }
 
     private static Category[] getCategoryInputs(Scanner scanner) {
@@ -44,7 +47,7 @@ public class Main {
         for(int i = 0; i < NUM_ITEM_INPUTS; i++) {
             String selection = InputUtils.getListSelectionInput(scanner,
                     "Do you want to select food or others item as next item? Select on of the following",
-                    Arrays.asList("Food", "Others"), false);
+                    Arrays.asList("Food", "Laptop", "Others"), false);
 
             String foodSelection = null;
             if(selection.equals("Food")) {
@@ -69,10 +72,15 @@ public class Main {
                 height = InputUtils.getNumberInput(scanner, i, "item height: ");
                 length = InputUtils.getNumberInput(scanner, i, "item length: ");
 
-                item = new Item(name, category, width, height, length, productionCost, sellingPrice, discount);
+                if(selection.equals("Laptop")) {
+                    BigInteger warrantyDuration = InputUtils.getNumberInput(scanner, i, "laptop item warranty: ").toBigInteger();
+                    item = new Laptop(name, category, width, height, length, productionCost, sellingPrice, discount, warrantyDuration);
+                }
+                else
+                    item = new Item(name, category, width, height, length, productionCost, sellingPrice, discount);
             }
             else {
-                BigDecimal weight = InputUtils.getNumberInput(scanner, i, "item weight: ");
+                BigDecimal weight = InputUtils.getNumberInput(scanner, i, "edible item weight: ");
                 if(foodSelection.equals(Pasta.class.getSimpleName()))
                     item = new Pasta(name, category, width, height, length, productionCost, sellingPrice, discount, weight);
                 else
@@ -105,7 +113,12 @@ public class Main {
         String houseNumber = InputUtils.getStringInput(scanner, i, addressFor + " house number: ");
         String city = InputUtils.getStringInput(scanner, i, addressFor + " address city: ");
         String postalCode = InputUtils.getStringInput(scanner, i, addressFor + " address postal code: ");
-        return new Address(street, houseNumber, city, postalCode);
+        return new Address.Builder()
+                .street(street)
+                .houseNumber(houseNumber)
+                .city(city)
+                .postalCode(postalCode)
+                .build();
     }
 
     private static Store[] getStoreInputs(Scanner scanner, List<Item> items) {
@@ -120,12 +133,16 @@ public class Main {
     }
 
     private static void findLargestItemFactories(List<Item> items, List<Factory> factories) {
-        List<Item> itemList = new ArrayList<>(items); //Keep original items list, could be removed
-        //Sorting input item list instead of item list from factories because
-        //it is not guaranteed that any factory produces the largest volume item.
-        //Also, multiple factories could produce that item.
-        itemList.sort((o1, o2) -> o2.getVolume().compareTo(o1.getVolume()));
-        Item largestVolumeItem = itemList.get(0);
+        Item largestVolumeItem =
+                items
+                        .stream()
+                        .max(Comparator.comparing(Item::getVolume))
+                        .orElse(null);
+        if(largestVolumeItem == null) {
+            System.out.println("Cannot determine highest volume item.");
+            return;
+        }
+
         List<Factory> largestVolumeItemFactories =
                 factories
                         .stream()
@@ -144,12 +161,16 @@ public class Main {
     }
 
     private static void findCheapestItemStore(List<Item> items, List<Store> stores) {
-        List<Item> itemList = new ArrayList<>(items); //Keep original items list, could be removed
-        //Sorting input item list instead of item list from factories because
-        //it is not guaranteed that any factory produces the largest volume item.
-        //Also, multiple factories could produce that item.
-        itemList.sort(Comparator.comparing(Item::getSellingPrice));
-        Item cheapestItem = itemList.get(0);
+        Item cheapestItem =
+                items
+                        .stream()
+                        .min(Comparator.comparing(Item::getSellingPrice))
+                        .orElse(null);
+        if(cheapestItem == null) {
+            System.out.println("Cannot determine cheapest item.");
+            return;
+        }
+
         List<Store> cheapestItemStores =
                 stores
                         .stream()
@@ -168,12 +189,8 @@ public class Main {
     }
 
     private static void printEdiblesInfo(List<Item> items) {
-        List<Item> itemList = new ArrayList<>(items); //Keep original items list, could be removed
-        //Sorting input item list instead of item list from factories because
-        //it is not guaranteed that any factory produces the largest volume item.
-        //Also, multiple factories could produce that item.
         List<Edible> edibles =
-                itemList
+                items
                         .stream()
                         .filter(item -> item instanceof Edible)
                         .map(item -> (Edible) item)
@@ -199,5 +216,27 @@ public class Main {
         }
         else
             System.out.println("No edible food items.");
+    }
+
+    private static void printShortestWarrantyDurationTechnical(List<Item> items) {
+        List<Technical> technicals =
+                items
+                        .stream()
+                        .filter(item -> item instanceof Technical)
+                        .map(item -> (Technical) item)
+                        .collect(Collectors.toList());
+
+        Technical shortestWarrantyDurationTechnical =
+                technicals
+                        .stream()
+                        .min(Comparator.comparing(Technical::getWarrantyDuration))
+                        .orElse(null);
+
+        if(shortestWarrantyDurationTechnical != null) {
+            System.out.println("Shortest warranty duration technical item: ");
+            System.out.println("\t- " + shortestWarrantyDurationTechnical);
+        }
+        else
+            System.out.println("No technical items.");
     }
 }
