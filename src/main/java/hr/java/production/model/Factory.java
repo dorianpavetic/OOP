@@ -1,25 +1,13 @@
 package hr.java.production.model;
 
-import java.util.Arrays;
-
-public class Factory extends Printable implements Displayable {
-    private String name;
+public class Factory extends NamedEntity {
     private Address address;
     private Item[] items;
 
-    public Factory(String name, Address address, Item[] items, Integer index) {
-        super(index);
-        this.name = name;
+    public Factory(String name, Address address, Item[] items) {
+        super(name);
         this.address = address;
         this.items = items;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Address getAddress() {
@@ -41,18 +29,8 @@ public class Factory extends Printable implements Displayable {
     @Override
     public String toString() {
         return Factory.class.getSimpleName()
-                .concat(name)
-                .concat(", ")
-                .concat(address.toString())
-                .concat(", Items: ")
-                .concat(Arrays.toString(items));
-    }
-
-    @Override
-    public String toShortString() {
-        return Factory.class.getSimpleName()
                 .concat(" ")
-                .concat(name)
+                .concat(getName())
                 .concat(" produces ")
                 .concat(String.valueOf(items.length))
                 .concat(" items. ")

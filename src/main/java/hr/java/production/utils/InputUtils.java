@@ -1,12 +1,7 @@
 package hr.java.production.utils;
 
-import hr.java.production.model.Displayable;
-
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class InputUtils {
     //true = Skip field inputs
@@ -22,13 +17,14 @@ public class InputUtils {
             int spaceIndex = s.indexOf(' ');
             String formatted = s.replaceFirst(" ", "");
             formatted = formatted.substring(0, spaceIndex) + Character.toUpperCase(s.charAt(spaceIndex+1)) + s.substring(spaceIndex+2, s.indexOf(':'));
-
-            return formatted + "_" + i;
+            final String input = formatted + "_" + i;
+            System.out.println("Enter " + (i + 1) + ". " + s + input);
+            return input;
         }
         return getStringInput(scanner, "Enter " + (i + 1) + ". " + s);
     }
 
-    private static String getStringInput(Scanner scanner, String message) {
+    public static String getStringInput(Scanner scanner, String message) {
         System.out.print(message);
         String input = scanner.nextLine();
         if (input == null || input.isBlank()) {
@@ -38,9 +34,24 @@ public class InputUtils {
         return input;
     }
 
+    public static int getStringSelectionInput(Scanner scanner, String message, String... possibleInputs) {
+        String value = getStringInput(scanner, message);
+        final int indexOf = Arrays.asList(possibleInputs).indexOf(value);
+        if(indexOf >= 0)
+            return indexOf;
+        else {
+            System.out.println("Wrong selection, please repeat with one of the following inputs: " +
+                    Arrays.toString(possibleInputs));
+            return getStringSelectionInput(scanner, message, possibleInputs);
+        }
+    }
+
     public static BigDecimal getNumberInput(Scanner scanner, int i, String s) {
-        if(isMock)
-            return new BigDecimal(new Random().nextInt(20));
+        if(isMock) {
+            final BigDecimal input = new BigDecimal(new Random().nextInt(20));
+            System.out.println("Enter " + (i + 1) + ". " + s + input);
+            return input;
+        }
         return getNumberInput(scanner, "Enter " + (i + 1) + ". " + s);
     }
 
@@ -84,27 +95,31 @@ public class InputUtils {
      *
      * @return selected object from list param. If exitable and -1 return null.
      */
-    public static <T extends Displayable> T getListSelectionInput(Scanner scanner,
+    public static <T> T getListSelectionInput(Scanner scanner,
                                                                      int index,
                                                                      Class<?> clazz,
                                                                      List<T> list,
                                                                      boolean exitable) {
-        index++; //Increase index for display (so 0. shows as 1.)
+        index++; //Increase index for display (so 0. index shows as 1.)
         String listClassName = list.get(0).getClass().getSimpleName().toLowerCase();
         String message = "Select " + index + ". " + clazz.getSimpleName().toLowerCase() +
                 " " + listClassName + " (Enter number in front of " + listClassName + ")";
         if (exitable)
             message = message + ".. (for exit enter '-1')";
+        return getListSelectionInput(scanner, message, list, exitable);
+    }
+
+    public static <T> T getListSelectionInput(Scanner scanner, String message, List<T> list, boolean exitable) {
         System.out.println(message + ": ");
         for (int i = 0; i < list.size(); i++)
-            System.out.println((i + 1) + ". " + list.get(i).toShortString());
+            System.out.println((i + 1) + ". " + list.get(i).toString());
 
         final Random random = new Random();
         int intValue = -1;
         while (intValue > list.size() || intValue < 1) {
             if(isMock) {
                 if(exitable) {
-                    intValue = random.nextInt(list.size() + 1); //Enable exit
+                    intValue = random.nextInt(list.size()) + 1; //Enable exit
                     if(random.nextBoolean())
                         intValue = -1;
                 }
@@ -125,7 +140,7 @@ public class InputUtils {
         return list.get(intValue-1);
     }
 
-    public static <T extends Displayable> List<T> getListSelectionInputs(Scanner scanner,
+    public static <T> List<T> getListSelectionInputs(Scanner scanner,
                                                                          int index,
                                                                          Class<?> clazz,
                                                                          List<T> list) {

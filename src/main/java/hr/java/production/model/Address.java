@@ -1,13 +1,12 @@
 package hr.java.production.model;
 
-public class Address extends Printable {
+public class Address {
     private String street;
     private String houseNumber;
     private String city;
     private String postalCode;
 
-    public Address(String street, String houseNumber, String city, String postalCode, Integer index) {
-        super(index);
+    public Address(String street, String houseNumber, String city, String postalCode) {
         this.street = street;
         this.houseNumber = houseNumber;
         this.city = city;

@@ -2,24 +2,14 @@ package hr.java.production.model;
 
 import java.util.Arrays;
 
-public class Store extends Printable implements Displayable  {
-    private String name;
+public class Store extends NamedEntity {
     private String webAddress;
     private Item[] items;
 
-    public Store(String name, String webAddress, Item[] items, Integer index) {
-        super(index);
-        this.name = name;
+    public Store(String name, String webAddress, Item[] items) {
+        super(name);
         this.webAddress = webAddress;
         this.items = items;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getWebAddress() {
@@ -42,18 +32,7 @@ public class Store extends Printable implements Displayable  {
     public String toString() {
         return Store.class.getSimpleName()
                 .concat(" ")
-                .concat(name)
-                .concat(", Web address: ")
-                .concat(webAddress)
-                .concat(", Items: ")
-                .concat(Arrays.toString(items));
-    }
-
-    @Override
-    public String toShortString() {
-        return Store.class.getSimpleName()
-                .concat(" ")
-                .concat(name)
+                .concat(getName())
                 .concat(" sells ")
                 .concat(String.valueOf(items.length))
                 .concat(" items")
