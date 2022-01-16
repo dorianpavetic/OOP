@@ -2,32 +2,24 @@ package hr.java.production.model;
 
 import java.math.BigDecimal;
 
-public class Item extends Printable implements Displayable {
-    private String name;
+public class Item extends NamedEntity {
     private Category category;
     private BigDecimal width;
     private BigDecimal height;
     private BigDecimal length;
     private BigDecimal productionCost;
     private BigDecimal sellingPrice;
+    private Discount discount;
 
-    public Item(String name, Category category, BigDecimal width, BigDecimal height, BigDecimal length, BigDecimal productionCost, BigDecimal sellingPrice, Integer index) {
-        super(index);
-        this.name = name;
+    public Item(String name, Category category, BigDecimal width, BigDecimal height, BigDecimal length, BigDecimal productionCost, BigDecimal sellingPrice, Discount discount) {
+        super(name);
         this.category = category;
         this.width = width;
         this.height = height;
         this.length = length;
         this.productionCost = productionCost;
         this.sellingPrice = sellingPrice;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+        this.discount = discount;
     }
 
     public Category getCategory() {
@@ -82,35 +74,19 @@ public class Item extends Printable implements Displayable {
         return width.multiply(height).multiply(length);
     }
 
-    @Override
-    public String toString() {
-        return new StringBuilder()
-                .append(Item.class.getSimpleName())
-                .append(" ")
-                .append(name)
-                .append(" (")
-                .append(category.toString())
-                .append(", width=")
-                .append(width)
-                .append(", height=")
-                .append(height)
-                .append(", length=")
-                .append(length)
-                .append(", volume=")
-                .append(getVolume())
-                .append(", productionCost=")
-                .append(productionCost)
-                .append(", sellingPrice=")
-                .append(sellingPrice)
-                .append(")")
-                .toString();
+    public Discount getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(Discount discount) {
+        this.discount = discount;
     }
 
     @Override
-    public String toShortString() {
+    public String toString() {
         return new StringBuilder(Item.class.getSimpleName())
                 .append(" ")
-                .append(name)
+                .append(getName())
                 .append(" ")
                 .append(width)
                 .append("x")
@@ -127,6 +103,5 @@ public class Item extends Printable implements Displayable {
                 .append(productionCost)
                 .append(")")
                 .toString();
-
     }
 }

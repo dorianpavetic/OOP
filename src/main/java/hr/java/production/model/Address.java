@@ -1,17 +1,12 @@
 package hr.java.production.model;
 
-public class Address extends Printable {
+public class Address {
     private String street;
     private String houseNumber;
     private String city;
     private String postalCode;
 
-    public Address(String street, String houseNumber, String city, String postalCode, Integer index) {
-        super(index);
-        this.street = street;
-        this.houseNumber = houseNumber;
-        this.city = city;
-        this.postalCode = postalCode;
+    private Address() {
     }
 
     public String getStreet() {
@@ -57,5 +52,45 @@ public class Address extends Printable {
                 .concat(city)
                 .concat(", ")
                 .concat(postalCode);
+    }
+
+    public static class Builder {
+        private String street;
+        private String houseNumber;
+        private String city;
+        private String postalCode;
+
+        public Builder() {
+        }
+
+        public Address build() {
+            Address address = new Address();
+            address.street = street;
+            address.houseNumber = houseNumber;
+            address.city = city;
+            address.postalCode = postalCode;
+
+            return address;
+        }
+
+        public Builder street(String street) {
+            this.street = street;
+            return this;
+        }
+
+        public Builder houseNumber(String houseNumber) {
+            this.houseNumber = houseNumber;
+            return this;
+        }
+
+        public Builder city(String city) {
+            this.city = city;
+            return this;
+        }
+
+        public Builder postalCode(String postalCode) {
+            this.postalCode = postalCode;
+            return this;
+        }
     }
 }

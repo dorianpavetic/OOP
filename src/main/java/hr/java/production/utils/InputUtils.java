@@ -1,16 +1,14 @@
 package hr.java.production.utils;
 
-import hr.java.production.model.Displayable;
-
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class InputUtils {
     //true = Skip field inputs
     private static final boolean isMock = true;
+    private static final int DEFAULT_BOUNDS_MIN = 0;
+    private static final int DEFAULT_BOUNDS_MAX = 100;
 
     private InputUtils() {
     }
@@ -21,14 +19,16 @@ public class InputUtils {
             //Input consists is a camil case class name with field name and index i. (e.g. categoryName_1)
             int spaceIndex = s.indexOf(' ');
             String formatted = s.replaceFirst(" ", "");
-            formatted = formatted.substring(0, spaceIndex) + Character.toUpperCase(s.charAt(spaceIndex+1)) + s.substring(spaceIndex+2, s.indexOf(':'));
-
-            return formatted + "_" + i;
+            formatted = formatted.substring(0, spaceIndex) +
+                    Character.toUpperCase(s.charAt(spaceIndex+1)) + s.substring(spaceIndex+2, s.indexOf(':'));
+            final String input = formatted + "_" + i;
+            System.out.println("Enter " + (i + 1) + ". " + s + input);
+            return input;
         }
         return getStringInput(scanner, "Enter " + (i + 1) + ". " + s);
     }
 
-    private static String getStringInput(Scanner scanner, String message) {
+    public static String getStringInput(Scanner scanner, String message) {
         System.out.print(message);
         String input = scanner.nextLine();
         if (input == null || input.isBlank()) {
@@ -39,16 +39,23 @@ public class InputUtils {
     }
 
     public static BigDecimal getNumberInput(Scanner scanner, int i, String s) {
-        if(isMock)
-            return new BigDecimal(new Random().nextInt(20));
-        return getNumberInput(scanner, "Enter " + (i + 1) + ". " + s);
+        return getNumberInput(scanner, i, s, DEFAULT_BOUNDS_MIN, DEFAULT_BOUNDS_MAX);
     }
 
-    private static BigDecimal getNumberInput(Scanner scanner, String message) {
-        return getNumberInput(scanner, message, false);
+    public static BigDecimal getNumberInput(Scanner scanner, int i, String s, int boundsMin, int boundsMax) {
+        if(isMock) {
+            final BigDecimal input = new BigDecimal(ThreadLocalRandom.current().nextInt(boundsMin, boundsMax + 1));
+            System.out.println("Enter " + (i + 1) + ". " + s + input);
+            return input;
+        }
+        return getNumberInput(scanner, "Enter " + (i + 1) + ". " + s, boundsMin, boundsMax);
     }
 
-    private static BigDecimal getNumberInput(Scanner scanner, String message, boolean exitable) {
+    private static BigDecimal getNumberInput(Scanner scanner, String message, int boundsMin, int boundsMax) {
+        return getNumberInput(scanner, message, false, boundsMin, boundsMax);
+    }
+
+    private static BigDecimal getNumberInput(Scanner scanner, String message, boolean exitable, int boundsMin, int boundsMax) {
         String value = getStringInput(scanner, message);
         try {
             BigDecimal input = new BigDecimal(value);
@@ -56,22 +63,29 @@ public class InputUtils {
                 if(input.intValue() == -1)
                     return input;
                 else
-                    return getForValidInput(scanner, message, input);
+                    return getForValidInput(scanner, message, input, true, boundsMin, boundsMax);
             }
             else
-                return getForValidInput(scanner, message, input);
+                return getForValidInput(scanner, message, input, false, boundsMin, boundsMax);
         } catch (NumberFormatException e) {
             System.out.println("Wrong number input, must be number. Please repeat...");
-            return getNumberInput(scanner, message);
+            return getNumberInput(scanner, message, exitable, boundsMin, boundsMax);
         }
     }
 
-    private static BigDecimal getForValidInput(Scanner scanner, String message, BigDecimal input) {
-        if (input.intValue() >= 1 && input.intValue() <= 1000)
+    //Bounds inclusive
+    private static BigDecimal getForValidInput(Scanner scanner, String message, BigDecimal input,
+                                               boolean exitable, int boundsMin, int boundsMax) {
+        if (input.intValue() >= boundsMin && input.intValue() <= boundsMax)
             return input;
         else {
-            System.out.println("Number input must be in range [1, 1000]. Please repeat...");
-            return getNumberInput(scanner, message);
+            if(exitable)
+                System.out.println("Number input must be in range [" +
+                        boundsMin + ", " + boundsMax + "] or -1 for exit. Please repeat...");
+            else
+                System.out.println("Number input must be in range [" +
+                        boundsMin + ", " + boundsMax + "]. Please repeat...");
+            return getNumberInput(scanner, message, exitable, boundsMin, boundsMax);
         }
     }
 
@@ -84,51 +98,51 @@ public class InputUtils {
      *
      * @return selected object from list param. If exitable and -1 return null.
      */
-    public static <T extends Displayable> T getListSelectionInput(Scanner scanner,
-                                                                     int index,
-                                                                     Class<?> clazz,
-                                                                     List<T> list,
-                                                                     boolean exitable) {
-        index++; //Increase index for display (so 0. shows as 1.)
+    public static <T> T getListSelectionInput(Scanner scanner,
+                                              int index,
+                                              Class<?> clazz,
+                                              List<T> list,
+                                              boolean exitable) {
+        index++; //Increase index for display (so 0. index shows as 1.)
         String listClassName = list.get(0).getClass().getSimpleName().toLowerCase();
         String message = "Select " + index + ". " + clazz.getSimpleName().toLowerCase() +
                 " " + listClassName + " (Enter number in front of " + listClassName + ")";
         if (exitable)
             message = message + ".. (for exit enter '-1')";
+        return getListSelectionInput(scanner, message, list, exitable);
+    }
+
+    public static <T> T getListSelectionInput(Scanner scanner, String message, List<T> list, boolean exitable) {
         System.out.println(message + ": ");
         for (int i = 0; i < list.size(); i++)
-            System.out.println((i + 1) + ". " + list.get(i).toShortString());
+            System.out.println((i + 1) + ". " + list.get(i).toString());
 
         final Random random = new Random();
-        int intValue = -1;
-        while (intValue > list.size() || intValue < 1) {
-            if(isMock) {
-                if(exitable) {
-                    intValue = random.nextInt(list.size() + 1); //Enable exit
-                    if(random.nextBoolean())
-                        intValue = -1;
-                }
-                else
-                    intValue = random.nextInt(list.size()) + 1;
-                System.out.println("Input: " + intValue);
-                if(intValue == -1)
-                    return null;
-                continue;
+        int intValue;
+        if(isMock) {
+            if(exitable) {
+                intValue = random.nextInt(list.size()) + 1; //Enable exit
+                if(random.nextBoolean())
+                    intValue = -1;
             }
-            intValue = getNumberInput(scanner, "Input: ", true).intValue();
-            if (exitable && intValue == -1)
+            else
+                intValue = random.nextInt(list.size()) + 1;
+            System.out.println("Input: " + intValue);
+            if(intValue == -1)
                 return null;
-            if (intValue > list.size() || intValue < 1)
-                System.out.println("Wrong index input, please repeat...");
+            else
+                return list.get(intValue-1);
         }
-
+        intValue = getNumberInput(scanner, "Input: ", true, 1, list.size()).intValue();
+        if(intValue == -1)
+            return null;
         return list.get(intValue-1);
     }
 
-    public static <T extends Displayable> List<T> getListSelectionInputs(Scanner scanner,
-                                                                         int index,
-                                                                         Class<?> clazz,
-                                                                         List<T> list) {
+    public static <T> List<T> getListSelectionInputs(Scanner scanner,
+                                                     int index,
+                                                     Class<?> clazz,
+                                                     List<T> list) {
         List<T> listCopy = new ArrayList<>(list); //Copy list to preserve original list on removal
         List<T> input = new ArrayList<>();
         while (!listCopy.isEmpty()) {
