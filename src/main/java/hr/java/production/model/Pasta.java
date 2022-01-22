@@ -6,14 +6,28 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 
+/**
+ * Edible item to be sold or produced. Has all properties of {@link Item}
+ * Additionally, contains weight needed for calculating kilocalories and price.
+ */
 public class Pasta extends Item implements Edible {
     private static final int CAL_PER_KG = 100;
 
     private BigDecimal weight;
 
-    public Pasta(String name, Category category, BigDecimal width, BigDecimal height,
-                 BigDecimal length, BigDecimal productionCost, BigDecimal sellingPrice, Discount discount, BigDecimal weight) {
-        super(name, category, width, height, length, productionCost, sellingPrice, discount);
+    /**
+     * Creates new edible item with all fields.
+     * Width, length and height are ZERO.
+     *
+     * @param name name of edible item.
+     * @param category selected category of edible item.
+     * @param productionCost amount edible item costs to make.
+     * @param sellingPrice amount edible item is selling for.
+     * @param discount discount data about edible item.
+     * @param weight weight of edible item.
+     */
+    public Pasta(String name, Category category, BigDecimal productionCost, BigDecimal sellingPrice, Discount discount, BigDecimal weight) {
+        super(name, category, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, productionCost, sellingPrice, discount);
         this.weight = weight;
     }
 

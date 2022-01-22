@@ -1,8 +1,16 @@
 package hr.java.production.model;
 
-public class NamedEntity {
+/**
+ * Used for entities that need to have name field.
+ */
+public abstract class NamedEntity {
     private String name;
 
+    /**
+     * Create new NamedEntity with provided name.
+     *
+     * @param name entity name.
+     */
     public NamedEntity(String name) {
         this.name = name;
     }

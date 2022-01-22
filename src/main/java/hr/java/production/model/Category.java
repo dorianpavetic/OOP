@@ -1,8 +1,15 @@
 package hr.java.production.model;
 
+/**
+ * Used to categorize items. Contains name and description.
+ */
 public class Category extends NamedEntity {
     private String description;
 
+    /**
+     * @param name name of the category.
+     * @param description description of the category.
+     */
     public Category(String name, String description) {
         super(name);
         this.description = description;

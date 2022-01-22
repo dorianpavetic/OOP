@@ -2,6 +2,9 @@ package hr.java.production.model;
 
 import java.math.BigDecimal;
 
+/**
+ * Item of certain category, can be sold or produced.
+ */
 public class Item extends NamedEntity {
     private Category category;
     private BigDecimal width;
@@ -11,7 +14,18 @@ public class Item extends NamedEntity {
     private BigDecimal sellingPrice;
     private Discount discount;
 
-    public Item(String name, Category category, BigDecimal width, BigDecimal height, BigDecimal length, BigDecimal productionCost, BigDecimal sellingPrice, Discount discount) {
+    /**
+     * @param name name of the item.
+     * @param category selected category of the item.
+     * @param width width of item in inches.
+     * @param height height of item in inches.
+     * @param length length of item in inches.
+     * @param productionCost amount item costs to make.
+     * @param sellingPrice amount item is selling for.
+     * @param discount discount data about the item.
+     */
+    public Item(String name, Category category, BigDecimal width, BigDecimal height, BigDecimal length,
+                BigDecimal productionCost, BigDecimal sellingPrice, Discount discount) {
         super(name);
         this.category = category;
         this.width = width;

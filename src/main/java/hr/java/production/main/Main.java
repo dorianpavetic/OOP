@@ -1,13 +1,22 @@
 package hr.java.production.main;
 
+import hr.java.production.exception.MultipleCategoryNamesException;
 import hr.java.production.model.*;
 import hr.java.production.utils.InputUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
+/**
+ * Runs app and contains main operations about app.
+ */
 public class Main {
     public static final String CURRENCY_UNIT = "HRK";
     private static final int NUM_CATEGORY_INPUTS = 3;
@@ -15,6 +24,15 @@ public class Main {
     private static final int NUM_FACTORY_INPUTS = 2;
     private static final int NUM_STORE_INPUTS = 2;
 
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
+    /**
+     * Lets user input categories, items, factories and stores.
+     * After are fields are entered, print data about inputs with filtering
+     * and sorting based on several fields.
+     *
+     * @param args default command line arguments that are not being used.
+     */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         Category[] categories = getCategoryInputs(scanner);
@@ -25,23 +43,68 @@ public class Main {
         System.out.println();
         findLargestItemFactories(Arrays.asList(items), Arrays.asList(factories));
         System.out.println();
-        findCheapestItemStore(Arrays.asList(items), Arrays.asList(stores));
+        findCheapestItemStores(Arrays.asList(items), Arrays.asList(stores));
         System.out.println();
         printEdiblesInfo(List.of(items));
         System.out.println();
         printShortestWarrantyDurationTechnical(List.of(items));
     }
 
+    /**
+     * Gets inputs about categories and return them as array.
+     * Checks that all category names are unique, if not {@link MultipleCategoryNamesException}
+     * is thrown on input and user needs to repeat input.
+     *
+     * @param scanner allows inputs.
+     * @return array of entered categories.
+     */
     private static Category[] getCategoryInputs(Scanner scanner) {
         Category[] categories = new Category[NUM_CATEGORY_INPUTS];
         for(int i = 0; i < NUM_CATEGORY_INPUTS; i++) {
-            String name = InputUtils.getStringInput(scanner, i, "category name: ");
+            String categoryName = null;
+            do {
+                try {
+                    categoryName = getCategoryNameInput(scanner, i, categories);
+                } catch (MultipleCategoryNamesException ex) {
+                    logger.error("Category is already entered before.", ex);
+                    System.out.println("[ERROR] " + ex.getMessage() + ". Please enter category name with unique name..");
+                }
+            } while (categoryName == null);
             String description = InputUtils.getStringInput(scanner, i, "category description: ");
-            categories[i] = new Category(name, description);
+            categories[i] = new Category(categoryName, description);
         }
         return categories;
     }
 
+
+    /**
+     * Gets category name if unique string entered, otherwise throws {@link MultipleCategoryNamesException}.
+     *
+     * @param scanner allows inputs.
+     * @param i index of category name is being entered for.
+     * @param categories list of previously entered categories. Needed to check if new input is unique.
+     * @return unique category name.
+     * @throws MultipleCategoryNamesException if category with same name already exists.
+     */
+    private static String getCategoryNameInput(Scanner scanner, int i, Category[] categories)
+            throws MultipleCategoryNamesException {
+
+        String categoryName = InputUtils.getStringInput(scanner, i, "category name: ");
+        for(Category category : categories) {
+            if(category != null && category.getName().equals(categoryName))
+                throw new MultipleCategoryNamesException("Multiple categories with name '" + categoryName + "'");
+        }
+        return categoryName;
+    }
+
+    /**
+     * Gets inputs about items and return them as array.
+     * User can choose between multiple kind of items - Food, Laptop and Others.
+     *
+     * @param scanner allows inputs.
+     * @param categories entered categories which can be assigned to categories.
+     * @return array of entered items.
+     */
     private static Item[] getItemInputs(Scanner scanner, List<Category> categories) {
         Item[] items = new Item[NUM_ITEM_INPUTS];
         for(int i = 0; i < NUM_ITEM_INPUTS; i++) {
@@ -64,13 +127,10 @@ public class Main {
             Discount discount = new Discount(discountInput);
 
             final Item item;
-            BigDecimal width = BigDecimal.ZERO;
-            BigDecimal height = BigDecimal.ZERO;
-            BigDecimal length = BigDecimal.ZERO;
             if(foodSelection == null) {
-                width = InputUtils.getNumberInput(scanner, i, "item width: ");
-                height = InputUtils.getNumberInput(scanner, i, "item height: ");
-                length = InputUtils.getNumberInput(scanner, i, "item length: ");
+                BigDecimal width = InputUtils.getNumberInput(scanner, i, "item width: ");
+                BigDecimal height = InputUtils.getNumberInput(scanner, i, "item height: ");
+                BigDecimal length = InputUtils.getNumberInput(scanner, i, "item length: ");
 
                 if(selection.equals("Laptop")) {
                     BigInteger warrantyDuration = InputUtils.getNumberInput(scanner, i, "laptop item warranty: ").toBigInteger();
@@ -82,9 +142,9 @@ public class Main {
             else {
                 BigDecimal weight = InputUtils.getNumberInput(scanner, i, "edible item weight: ");
                 if(foodSelection.equals(Pasta.class.getSimpleName()))
-                    item = new Pasta(name, category, width, height, length, productionCost, sellingPrice, discount, weight);
+                    item = new Pasta(name, category, productionCost, sellingPrice, discount, weight);
                 else
-                    item = new Pork(name, category, width, height, length, productionCost, sellingPrice, discount, weight);
+                    item = new Pork(name, category, productionCost, sellingPrice, discount, weight);
 
                 Edible edible = (Edible) item;
                 System.out.println("Entered food item has " + edible.calculateKilocalories() + " kilokalorija.");
@@ -96,6 +156,13 @@ public class Main {
         return items;
     }
 
+    /**
+     * Gets inputs about factories and return them as array.
+     *
+     * @param scanner allows inputs.
+     * @param items entered items which can be assigned to factories.
+     * @return array of entered factories.
+     */
     private static Factory[] getFactoryInputs(Scanner scanner, List<Item> items) {
         Factory[] factories = new Factory[NUM_FACTORY_INPUTS];
         for(int i = 0; i < NUM_FACTORY_INPUTS; i++) {
@@ -107,6 +174,15 @@ public class Main {
         return factories;
     }
 
+
+    /**
+     * Gets inputs about address and return new {@link Address}.
+     *
+     * @param scanner allows inputs.
+     * @param i index of input in list which address is being entered for.
+     * @param addressForClass object class that address is being entered for.
+     * @return Address with street name, house number, city name and postal code.
+     */
     private static Address getAddressInput(Scanner scanner, int i, Class<?> addressForClass) {
         String addressFor = addressForClass.getSimpleName().toLowerCase();
         String street = InputUtils.getStringInput(scanner, i, addressFor + " address street: ");
@@ -121,6 +197,13 @@ public class Main {
                 .build();
     }
 
+    /**
+     * Gets inputs about stores and return them as array.
+     *
+     * @param scanner allows inputs.
+     * @param items entered items which can be assigned to stores.
+     * @return array of entered stores.
+     */
     private static Store[] getStoreInputs(Scanner scanner, List<Item> items) {
         Store[] stores = new Store[NUM_STORE_INPUTS];
         for(int i = 0; i < NUM_STORE_INPUTS; i++) {
@@ -132,6 +215,12 @@ public class Main {
         return stores;
     }
 
+    /**
+     * Finds and prints the list of factories that produce item with the largest volume.
+     *
+     * @param items entered items to find the largest volume item.
+     * @param factories entered factories to filter for the largest volume item.
+     */
     private static void findLargestItemFactories(List<Item> items, List<Factory> factories) {
         Item largestVolumeItem =
                 items
@@ -160,7 +249,13 @@ public class Main {
         }
     }
 
-    private static void findCheapestItemStore(List<Item> items, List<Store> stores) {
+    /**
+     * Finds and prints the list of stores that sells the cheapest item.
+     *
+     * @param items entered items to find the cheapest item.
+     * @param stores entered stores to filter for the cheapest item.
+     */
+    private static void findCheapestItemStores(List<Item> items, List<Store> stores) {
         Item cheapestItem =
                 items
                         .stream()
@@ -188,6 +283,12 @@ public class Main {
         }
     }
 
+    /**
+     * Finds and prints data about the highest calories and the most expensive edibles.
+     * In case there is no edibles exist among items, "No edible food items." is printed.
+     *
+     * @param items entered items to print data for.
+     */
     private static void printEdiblesInfo(List<Item> items) {
         List<Edible> edibles =
                 items
@@ -218,6 +319,12 @@ public class Main {
             System.out.println("No edible food items.");
     }
 
+    /**
+     * Finds and prints data about the {@link Technical} that has the shortest warranty period.
+     * In case there is no technical exist among items, "No technical items." is printed.
+     *
+     * @param items entered items to print data for.
+     */
     private static void printShortestWarrantyDurationTechnical(List<Item> items) {
         List<Technical> technicals =
                 items
