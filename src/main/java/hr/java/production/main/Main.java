@@ -1,10 +1,12 @@
 package hr.java.production.main;
 
 import hr.java.production.model.*;
+import hr.java.production.model.Package;
 import hr.java.production.utils.InputUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,6 +16,7 @@ public class Main {
     private static final int NUM_ITEM_INPUTS = 5;
     private static final int NUM_FACTORY_INPUTS = 2;
     private static final int NUM_STORE_INPUTS = 2;
+    private static final int NUM_JUICE_ENTITY_INPUTS = 2;
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -21,6 +24,7 @@ public class Main {
         Item[] items = getItemInputs(scanner, Arrays.asList(categories));
         Factory[] factories = getFactoryInputs(scanner, Arrays.asList(items));
         Store[] stores = getStoreInputs(scanner, Arrays.asList(items));
+        JuiceEntity[] juiceEntities = getJuiceEntityInputs(scanner, Arrays.asList(items));
 
         System.out.println();
         findLargestItemFactories(Arrays.asList(items), Arrays.asList(factories));
@@ -30,6 +34,30 @@ public class Main {
         printEdiblesInfo(List.of(items));
         System.out.println();
         printShortestWarrantyDurationTechnical(List.of(items));
+        System.out.println();
+        printJuiceEntities(List.of(juiceEntities));
+    }
+
+    private static JuiceEntity[] getJuiceEntityInputs(Scanner scanner, List<Item> items) {
+        JuiceEntity[] juiceEntities = new JuiceEntity[NUM_JUICE_ENTITY_INPUTS];
+        for(int i = 0; i < NUM_JUICE_ENTITY_INPUTS; i++) {
+            String name = InputUtils.getStringInput(scanner, i, "juice entity name: ");
+            LocalDateTime localDateTime = InputUtils.getLocalDateTimeInput(
+                    scanner, i, "juice entity create time: ");
+            Item[] selectedItems = InputUtils.getListSelectionInputs(
+                    scanner, i, Factory.class, items).toArray(new Item[0]);
+            BigDecimal weight = InputUtils.getNumberInput(scanner, i, "juice entity weight in kg: ");
+
+            String selection = InputUtils.getListSelectionInput(scanner,
+                    "What type of juice entity do you want to create? Select on of the following",
+                    Arrays.asList(Orange.class.getSimpleName(), Apple.class.getSimpleName()), false);
+
+            if(selection.equals(Orange.class.getSimpleName()))
+                juiceEntities[i] = new Orange(name, localDateTime, selectedItems, weight);
+            else
+                juiceEntities[i] = new Apple(name, localDateTime, selectedItems, weight);
+        }
+        return juiceEntities;
     }
 
     private static Category[] getCategoryInputs(Scanner scanner) {
@@ -74,7 +102,10 @@ public class Main {
 
                 if(selection.equals("Laptop")) {
                     BigInteger warrantyDuration = InputUtils.getNumberInput(scanner, i, "laptop item warranty: ").toBigInteger();
-                    item = new Laptop(name, category, width, height, length, productionCost, sellingPrice, discount, warrantyDuration);
+                    String packaging = InputUtils.getStringInput(scanner, i, "laptop item packaging: ");
+
+                    item = new Laptop(name, category, width, height, length, productionCost,
+                            sellingPrice, discount, warrantyDuration, new Package(packaging));
                 }
                 else
                     item = new Item(name, category, width, height, length, productionCost, sellingPrice, discount);
@@ -238,5 +269,10 @@ public class Main {
         }
         else
             System.out.println("No technical items.");
+    }
+
+    private static void printJuiceEntities(List<JuiceEntity> juiceEntities) {
+        for(JuiceEntity juiceEntity : juiceEntities)
+            System.out.println(juiceEntity);
     }
 }

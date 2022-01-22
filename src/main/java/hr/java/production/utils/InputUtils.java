@@ -1,7 +1,13 @@
 package hr.java.production.utils;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class InputUtils {
@@ -9,6 +15,7 @@ public class InputUtils {
     private static final boolean isMock = true;
     private static final int DEFAULT_BOUNDS_MIN = 0;
     private static final int DEFAULT_BOUNDS_MAX = 100;
+    public static final String DATE_TIME_FORMAT = "dd.MM.yyyy. HH:mm";
 
     private InputUtils() {
     }
@@ -36,6 +43,20 @@ public class InputUtils {
             return getStringInput(scanner, message);
         }
         return input;
+    }
+
+    public static LocalDateTime getLocalDateTimeInput(Scanner scanner, int i, String s) {
+        String input = getStringInput(scanner, "Enter " + (i + 1) + ". " + s);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+        LocalDateTime localDateTime = null;
+        try {
+            localDateTime = LocalDateTime.parse(input, formatter);
+        } catch (DateTimeParseException ex) {
+            System.out.println("Wrong date and time input, must be in format: '" +
+                    DATE_TIME_FORMAT + "'. Please repeat...");
+            return getLocalDateTimeInput(scanner, i, s);
+        }
+        return localDateTime;
     }
 
     public static BigDecimal getNumberInput(Scanner scanner, int i, String s) {
