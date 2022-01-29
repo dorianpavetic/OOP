@@ -2,6 +2,7 @@ package hr.java.production.model;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Objects;
 
 /**
  * Technical item that represents laptop and has warranty.
@@ -48,5 +49,19 @@ public final class Laptop extends Item implements Technical {
                 .append(getWarrantyDuration())
                 .append(" months")
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Laptop laptop = (Laptop) o;
+        return Objects.equals(warrantyDuration, laptop.warrantyDuration);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), warrantyDuration);
     }
 }

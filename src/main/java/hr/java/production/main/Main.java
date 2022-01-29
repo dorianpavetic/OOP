@@ -1,17 +1,16 @@
 package hr.java.production.main;
 
+import hr.java.production.enums.City;
 import hr.java.production.exception.MultipleCategoryNamesException;
 import hr.java.production.model.*;
+import hr.java.production.sort.ProductionSorter;
 import hr.java.production.utils.InputUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,18 +35,23 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         Category[] categories = getCategoryInputs(scanner);
-        Item[] items = getItemInputs(scanner, Arrays.asList(categories));
-        Factory[] factories = getFactoryInputs(scanner, Arrays.asList(items));
-        Store[] stores = getStoreInputs(scanner, Arrays.asList(items));
+        Set<Item> items = getItemInputs(scanner, Arrays.asList(categories));
+        Factory[] factories = getFactoryInputs(scanner, items);
+        Store[] stores = getStoreInputs(scanner, items);
 
         System.out.println();
-        findLargestItemFactories(Arrays.asList(items), Arrays.asList(factories));
+        findLargestItemFactories(items, Arrays.asList(factories));
         System.out.println();
-        findCheapestItemStores(Arrays.asList(items), Arrays.asList(stores));
+        findCheapestItemStores(items, Arrays.asList(stores));
         System.out.println();
-        printEdiblesInfo(List.of(items));
+        printEdiblesInfo(items);
         System.out.println();
-        printShortestWarrantyDurationTechnical(List.of(items));
+        printShortestWarrantyDurationTechnical(items);
+
+        System.out.println();
+        printAndSortItemsByCategories(items);
+        System.out.println();
+        printCheapestAndMostExpensiveEdibleTechnical(items);
     }
 
     /**
@@ -105,8 +109,8 @@ public class Main {
      * @param categories entered categories which can be assigned to categories.
      * @return array of entered items.
      */
-    private static Item[] getItemInputs(Scanner scanner, List<Category> categories) {
-        Item[] items = new Item[NUM_ITEM_INPUTS];
+    private static Set<Item> getItemInputs(Scanner scanner, List<Category> categories) {
+        Set<Item> items = new HashSet<>();
         for(int i = 0; i < NUM_ITEM_INPUTS; i++) {
             String selection = InputUtils.getListSelectionInput(scanner,
                     "Do you want to select food or others item as next item? Select on of the following",
@@ -151,7 +155,7 @@ public class Main {
                 System.out.println("Total price of this food item is " + edible.calculatePrice() + " " + CURRENCY_UNIT);
             }
 
-            items[i] = item;
+            items.add(item);
         }
         return items;
     }
@@ -163,12 +167,12 @@ public class Main {
      * @param items entered items which can be assigned to factories.
      * @return array of entered factories.
      */
-    private static Factory[] getFactoryInputs(Scanner scanner, List<Item> items) {
+    private static Factory[] getFactoryInputs(Scanner scanner, Set<Item> items) {
         Factory[] factories = new Factory[NUM_FACTORY_INPUTS];
         for(int i = 0; i < NUM_FACTORY_INPUTS; i++) {
             String name = InputUtils.getStringInput(scanner, i, "factory name: ");
             Address address = getAddressInput(scanner, i, Factory.class);
-            Item[] selectedItems = InputUtils.getListSelectionInputs(scanner, i, Factory.class, items).toArray(new Item[0]);
+            Set<Item> selectedItems = new HashSet<>(InputUtils.getListSelectionInputs(scanner, i, Factory.class, items.stream().toList()));
             factories[i] = new Factory(name, address, selectedItems);
         }
         return factories;
@@ -187,13 +191,11 @@ public class Main {
         String addressFor = addressForClass.getSimpleName().toLowerCase();
         String street = InputUtils.getStringInput(scanner, i, addressFor + " address street: ");
         String houseNumber = InputUtils.getStringInput(scanner, i, addressFor + " house number: ");
-        String city = InputUtils.getStringInput(scanner, i, addressFor + " address city: ");
-        String postalCode = InputUtils.getStringInput(scanner, i, addressFor + " address postal code: ");
+        City city = InputUtils.getListSelectionInput(scanner, i, City.class, Arrays.asList(City.values()), false);
         return new Address.Builder()
                 .street(street)
                 .houseNumber(houseNumber)
                 .city(city)
-                .postalCode(postalCode)
                 .build();
     }
 
@@ -204,12 +206,12 @@ public class Main {
      * @param items entered items which can be assigned to stores.
      * @return array of entered stores.
      */
-    private static Store[] getStoreInputs(Scanner scanner, List<Item> items) {
+    private static Store[] getStoreInputs(Scanner scanner, Set<Item> items) {
         Store[] stores = new Store[NUM_STORE_INPUTS];
         for(int i = 0; i < NUM_STORE_INPUTS; i++) {
             String name = InputUtils.getStringInput(scanner, i, "store name: ");
             String webAddress = InputUtils.getStringInput(scanner, i, "store web address: ");
-            Item[] selectedItems = InputUtils.getListSelectionInputs(scanner, i, Store.class, items).toArray(new Item[0]);
+            Set<Item> selectedItems = new HashSet<>(InputUtils.getListSelectionInputs(scanner, i, Store.class, items.stream().toList()));
             stores[i] = new Store(name, webAddress, selectedItems);
         }
         return stores;
@@ -217,11 +219,10 @@ public class Main {
 
     /**
      * Finds and prints the list of factories that produce item with the largest volume.
-     *
-     * @param items entered items to find the largest volume item.
+     *  @param items entered items to find the largest volume item.
      * @param factories entered factories to filter for the largest volume item.
      */
-    private static void findLargestItemFactories(List<Item> items, List<Factory> factories) {
+    private static void findLargestItemFactories(Set<Item> items, List<Factory> factories) {
         Item largestVolumeItem =
                 items
                         .stream()
@@ -235,7 +236,7 @@ public class Main {
         List<Factory> largestVolumeItemFactories =
                 factories
                         .stream()
-                        .filter(factory -> Arrays.asList(factory.getItems()).contains(largestVolumeItem))
+                        .filter(factory -> factory.getItems().contains(largestVolumeItem))
                         .collect(Collectors.toList());
 
         if(largestVolumeItemFactories.isEmpty())
@@ -251,11 +252,10 @@ public class Main {
 
     /**
      * Finds and prints the list of stores that sells the cheapest item.
-     *
-     * @param items entered items to find the cheapest item.
+     *  @param items entered items to find the cheapest item.
      * @param stores entered stores to filter for the cheapest item.
      */
-    private static void findCheapestItemStores(List<Item> items, List<Store> stores) {
+    private static void findCheapestItemStores(Set<Item> items, List<Store> stores) {
         Item cheapestItem =
                 items
                         .stream()
@@ -269,7 +269,7 @@ public class Main {
         List<Store> cheapestItemStores =
                 stores
                         .stream()
-                        .filter(factory -> Arrays.asList(factory.getItems()).contains(cheapestItem))
+                        .filter(factory -> factory.getItems().contains(cheapestItem))
                         .collect(Collectors.toList());
 
         if(cheapestItemStores.isEmpty())
@@ -289,7 +289,7 @@ public class Main {
      *
      * @param items entered items to print data for.
      */
-    private static void printEdiblesInfo(List<Item> items) {
+    private static void printEdiblesInfo(Set<Item> items) {
         List<Edible> edibles =
                 items
                         .stream()
@@ -325,7 +325,7 @@ public class Main {
      *
      * @param items entered items to print data for.
      */
-    private static void printShortestWarrantyDurationTechnical(List<Item> items) {
+    private static void printShortestWarrantyDurationTechnical(Set<Item> items) {
         List<Technical> technicals =
                 items
                         .stream()
@@ -345,5 +345,75 @@ public class Main {
         }
         else
             System.out.println("No technical items.");
+    }
+
+    private static void printAndSortItemsByCategories(Set<Item> items) {
+        Map<Category, Set<Item>> itemsByCategoriesMap = new HashMap<>();
+        for(Item item : items) {
+            if(itemsByCategoriesMap.containsKey(item.getCategory())) {
+                Set<Item> itemsByCategory = itemsByCategoriesMap.get(item.getCategory());
+                itemsByCategory.add(item);
+            }
+            else {
+                Set<Item> itemsByCategory = new HashSet<>();
+                itemsByCategory.add(item);
+                itemsByCategoriesMap.put(item.getCategory(), itemsByCategory);
+            }
+        }
+
+        for(Category category : itemsByCategoriesMap.keySet()) {
+            System.out.println("Category " + category.getName());
+            Item cheapestItem = itemsByCategoriesMap
+                    .get(category)
+                    .stream()
+                    .sorted(new ProductionSorter(true))
+                    .findFirst()
+                    .orElse(null);
+            if(cheapestItem != null)
+                System.out.println("\t- The cheapest item for this category is: " +
+                        cheapestItem.getName() + ", Price: " + cheapestItem.getSellingPrice());
+            else
+                System.out.println("\t- Can't find cheapest item for this category");
+
+            Item mostExpensiveItem = itemsByCategoriesMap
+                    .get(category)
+                    .stream()
+                    .sorted(new ProductionSorter(false))
+                    .findFirst()
+                    .orElse(null);
+            if(mostExpensiveItem != null)
+                System.out.println("\t- The most expensive item for this category is: " +
+                        mostExpensiveItem.getName() + ", Price: " + mostExpensiveItem.getSellingPrice());
+            else
+                System.out.println("\t- Can't find cheapest item for this category");
+        }
+    }
+
+    private static void printCheapestAndMostExpensiveEdibleTechnical(Set<Item> items) {
+        Set<Item> edibleOrTechnicalItems = items.stream()
+                .filter(item -> item instanceof Edible || item instanceof Technical)
+                .collect(Collectors.toSet());
+
+        Item cheapestItem = edibleOrTechnicalItems
+                .stream()
+                .sorted(new ProductionSorter(true))
+                .findFirst()
+                .orElse(null);
+        if(cheapestItem != null)
+            System.out.println("The cheapest item is: " + cheapestItem.getName() + " (" +
+                    cheapestItem.getClass().getSimpleName() + "), Price: " + cheapestItem.getSellingPrice());
+        else
+            System.out.println("Can't find cheapest item.");
+
+        Item mostExpensiveItem = edibleOrTechnicalItems
+                .stream()
+                .sorted(new ProductionSorter(false))
+                .findFirst()
+                .orElse(null);
+        if(mostExpensiveItem != null)
+            System.out.println("The most expensive item is: " + mostExpensiveItem.getName() + " (" +
+                    mostExpensiveItem.getClass().getSimpleName() + "), Price: " + mostExpensiveItem.getSellingPrice());
+        else
+            System.out.println("Can't find cheapest item.");
     }
 }

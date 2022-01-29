@@ -5,6 +5,7 @@ import hr.java.production.main.Main;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.Objects;
 
 /**
  * Edible item to be sold or produced. Has all properties of {@link Item}
@@ -73,5 +74,19 @@ public class Pork extends Item implements Edible {
                 .append(getProductionCost())
                 .append(")")
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Pork pork = (Pork) o;
+        return Objects.equals(weight, pork.weight);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), weight);
     }
 }

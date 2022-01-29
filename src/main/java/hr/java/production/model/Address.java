@@ -1,5 +1,9 @@
 package hr.java.production.model;
 
+import hr.java.production.enums.City;
+
+import java.util.Objects;
+
 /**
  * Represents address of factory, store or any other entity that can be located by address.
  * Instantiated by builder pattern rather than by constructor.
@@ -7,8 +11,7 @@ package hr.java.production.model;
 public class Address {
     private String street;
     private String houseNumber;
-    private String city;
-    private String postalCode;
+    private City city;
 
     /**
      * Empty constructor intended to be called by nested builder.
@@ -32,20 +35,12 @@ public class Address {
         this.houseNumber = houseNumber;
     }
 
-    public String getCity() {
+    public City getCity() {
         return city;
     }
 
-    public void setCity(String city) {
+    public void setCity(City city) {
         this.city = city;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
     }
 
     @Override
@@ -56,9 +51,21 @@ public class Address {
                 .concat(", ")
                 .concat(houseNumber)
                 .concat(", ")
-                .concat(city)
-                .concat(", ")
-                .concat(postalCode);
+                .concat(city.toString());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Address address = (Address) o;
+        return Objects.equals(street, address.street) &&
+                Objects.equals(houseNumber, address.houseNumber) && city == address.city;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(street, houseNumber, city);
     }
 
     /**
@@ -67,8 +74,7 @@ public class Address {
     public static class Builder {
         private String street;
         private String houseNumber;
-        private String city;
-        private String postalCode;
+        private City city;
 
         /**
          * Creates builder object.
@@ -86,7 +92,6 @@ public class Address {
             address.street = street;
             address.houseNumber = houseNumber;
             address.city = city;
-            address.postalCode = postalCode;
 
             return address;
         }
@@ -114,24 +119,13 @@ public class Address {
         }
 
         /**
-         * Sets new city name in builder.
+         * Sets new city in builder, including name and postal code.
          *
-         * @param city new city name.
+         * @param city new city with name and postal code.
          * @return builder object that can take more value parameters.
          */
-        public Builder city(String city) {
+        public Builder city(City city) {
             this.city = city;
-            return this;
-        }
-
-        /**
-         * Sets new postal code in builder.
-         *
-         * @param postalCode new address street.
-         * @return builder object that can take more value parameters.
-         */
-        public Builder postalCode(String postalCode) {
-            this.postalCode = postalCode;
             return this;
         }
     }

@@ -1,6 +1,7 @@
 package hr.java.production.model;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 /**
  * Item of certain category, can be sold or produced.
@@ -117,5 +118,23 @@ public class Item extends NamedEntity {
                 .append(productionCost)
                 .append(")")
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Item item = (Item) o;
+        return Objects.equals(category, item.category) && Objects.equals(width, item.width) &&
+                Objects.equals(height, item.height) && Objects.equals(length, item.length) &&
+                Objects.equals(productionCost, item.productionCost) &&
+                Objects.equals(sellingPrice, item.sellingPrice) && Objects.equals(discount, item.discount);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), category, width, height,
+                length, productionCost, sellingPrice, discount);
     }
 }

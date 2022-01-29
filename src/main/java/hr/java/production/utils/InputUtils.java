@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class InputUtils {
     //true = Skip field inputs
-    private static final boolean isMock = false;
+    private static final boolean isMock = true;
     private static final int DEFAULT_BOUNDS_MIN = 0;
     private static final int DEFAULT_BOUNDS_MAX = 100;
 
@@ -264,7 +264,7 @@ public class InputUtils {
      * @param <T> type of object to be returned if everything is ok.
      * @return selected object from list param. If exitable and -1 return null.
      */
-    public static <T> T getListSelectionInput(Scanner scanner,
+    private static <T> T getListSelectionInput(Scanner scanner,
                                               int index,
                                               Class<?> clazz,
                                               List<T> list,
@@ -319,7 +319,7 @@ public class InputUtils {
      * @return selected object from list param if valid, otherwise throw exception. If exitable and -1 return null.
      * @throws MultipleInstanceException in case selected value is present in previousInputs.
      */
-    public static <T> T getListSelectionInput(Scanner scanner, String message, List<T> list,
+    private static <T> T getListSelectionInput(Scanner scanner, String message, List<T> list,
                                               boolean exitable, List<T> previousInputs) throws MultipleInstanceException {
         System.out.println(message + ": ");
         for (int i = 0; i < list.size(); i++)
