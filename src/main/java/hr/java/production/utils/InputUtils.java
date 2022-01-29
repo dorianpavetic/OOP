@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class InputUtils {
     //true = Skip field inputs
-    private static final boolean isMock = false;
+    private static final boolean isMock = true;
     private static final int DEFAULT_BOUNDS_MIN = 0;
     private static final int DEFAULT_BOUNDS_MAX = 100;
 

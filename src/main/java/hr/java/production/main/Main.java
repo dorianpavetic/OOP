@@ -1,10 +1,13 @@
 package hr.java.production.main;
 
+import hr.java.production.exception.IllegalMeasuringUnitArgumentException;
 import hr.java.production.exception.MultipleCategoryNamesException;
+import hr.java.production.exception.NegativeNumberOperationException;
 import hr.java.production.model.*;
 import hr.java.production.utils.InputUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -23,6 +26,7 @@ public class Main {
     private static final int NUM_ITEM_INPUTS = 5;
     private static final int NUM_FACTORY_INPUTS = 2;
     private static final int NUM_STORE_INPUTS = 2;
+    private static final int NUM_UNIT_INPUTS = 3;
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
@@ -39,6 +43,7 @@ public class Main {
         Item[] items = getItemInputs(scanner, Arrays.asList(categories));
         Factory[] factories = getFactoryInputs(scanner, Arrays.asList(items));
         Store[] stores = getStoreInputs(scanner, Arrays.asList(items));
+        MeasuringUnit[] measuringUnits = getMeasuringUnitInputs(scanner);
 
         System.out.println();
         findLargestItemFactories(Arrays.asList(items), Arrays.asList(factories));
@@ -48,6 +53,42 @@ public class Main {
         printEdiblesInfo(List.of(items));
         System.out.println();
         printShortestWarrantyDurationTechnical(List.of(items));
+
+        System.out.println();
+        printMeasuringUnits(List.of(measuringUnits));
+    }
+
+    /**
+     * Prints list of all available measuring units' names.
+     *
+     * @param measuringUnits list of all entered measuring units.
+     */
+    private static void printMeasuringUnits(List<MeasuringUnit> measuringUnits) {
+        System.out.println("Following measuring units have been entered:");
+        for(MeasuringUnit measuringUnit : measuringUnits)
+            System.out.println(measuringUnit.name());
+    }
+
+    /**
+     * Gets inputs about measuring units gathering inputs about names.
+     *
+     * @param scanner allows inputs.
+     * @return array of entered measuring units.
+     */
+    private static MeasuringUnit[] getMeasuringUnitInputs(Scanner scanner) {
+        MeasuringUnit[] measuringUnits = new MeasuringUnit[NUM_UNIT_INPUTS];
+        for(int i = 0; i < NUM_UNIT_INPUTS; i++) {
+            String name = InputUtils.getStringInput(scanner, i, "measuring unit name: ");
+            try {
+                measuringUnits[i] = new MeasuringUnit(name);
+            } catch (IllegalMeasuringUnitArgumentException ex) {
+                System.out.println(ex.getMessage() + ". Please repeat...");
+                ex.printStackTrace();
+                logger.error("Blank measuring unit entered", ex);
+                i--;
+            }
+        }
+        return measuringUnits;
     }
 
     /**
@@ -147,8 +188,20 @@ public class Main {
                     item = new Pork(name, category, productionCost, sellingPrice, discount, weight);
 
                 Edible edible = (Edible) item;
-                System.out.println("Entered food item has " + edible.calculateKilocalories() + " kilokalorija.");
-                System.out.println("Total price of this food item is " + edible.calculatePrice() + " " + CURRENCY_UNIT);
+                try {
+                    System.out.println("Entered food item has " + edible.calculateKilocalories() + " kilocalories.");
+                } catch (NegativeNumberOperationException ex) {
+                    System.out.println("Cannot calculate kilocalories for this item. " + ex.getMessage());
+                    ex.printStackTrace();
+                    logger.error(MarkerFactory.getMarker("FATAL"), ex.getMessage(), ex);
+
+                }
+
+                try {
+                    System.out.println("Total price of this food item is " + edible.calculatePrice() + " " + CURRENCY_UNIT);
+                } catch (NegativeNumberOperationException ex) {
+                    System.out.println("Cannot calculate total price of this item. " + ex.getMessage());
+                    ex.printStackTrace();}
             }
 
             items[i] = item;
@@ -300,13 +353,36 @@ public class Main {
         Edible highestCaloriesEdible =
                 edibles
                         .stream()
-                        .max(Comparator.comparing(Edible::calculateKilocalories))
+                        .max((o1, o2) -> {
+                            BigInteger kilocalories1, kilocalories2;
+                            try {
+                                kilocalories1 = o1.calculateKilocalories();
+                                kilocalories2 = o2.calculateKilocalories();
+                            } catch (NegativeNumberOperationException ex) {
+                                kilocalories1 = BigInteger.ZERO;
+                                kilocalories2 = BigInteger.ZERO;
+                                ex.printStackTrace();
+                            }
+                            return kilocalories1.compareTo(kilocalories2);
+                        })
                         .orElse(null);
 
         Edible mostExpensiveEdible =
                 edibles
                         .stream()
-                        .max(Comparator.comparing(Edible::calculatePrice))
+                        .max((o1, o2) -> {
+                            BigInteger price1, price2;
+                            try {
+                                price1 = o1.calculateKilocalories();
+                                price2 = o2.calculateKilocalories();
+                            } catch (NegativeNumberOperationException ex) {
+                                price1 = BigInteger.ZERO;
+                                price2 = BigInteger.ZERO;
+                                ex.printStackTrace();
+
+                            }
+                            return price1.compareTo(price2);
+                        })
                         .orElse(null);
 
         if(highestCaloriesEdible != null) {

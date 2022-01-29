@@ -1,5 +1,6 @@
 package hr.java.production.model;
 
+import hr.java.production.exception.NegativeNumberOperationException;
 import hr.java.production.main.Main;
 
 import java.math.BigDecimal;
@@ -11,7 +12,7 @@ import java.math.RoundingMode;
  * Additionally, contains weight needed for calculating kilocalories and price.
  */
 public class Pork extends Item implements Edible {
-    private static final int CAL_PER_KG = 300;
+    private static final int CAL_PER_KG = -300;
 
     private BigDecimal weight;
 
@@ -41,17 +42,37 @@ public class Pork extends Item implements Edible {
 
     @Override
     public BigInteger calculateKilocalories() {
-        return getWeight().multiply(BigDecimal.valueOf(CAL_PER_KG)).toBigInteger();
+        BigInteger kiloCalories = getWeight().multiply(BigDecimal.valueOf(CAL_PER_KG)).toBigInteger();
+        if(kiloCalories.intValue() < 0)
+            throw new NegativeNumberOperationException("Kilocalories must be positive");
+        return kiloCalories;
     }
 
     @Override
     public BigDecimal calculatePrice() {
         BigDecimal discount = getDiscount().discountAmount().divide(BigDecimal.valueOf(100), RoundingMode.HALF_EVEN);
-        return getSellingPrice().multiply(weight).multiply(new BigDecimal(1).subtract(discount));
+        BigDecimal price = getSellingPrice().multiply(weight).multiply(new BigDecimal(1).subtract(discount));
+        if(price.doubleValue() < 0)
+            throw new NegativeNumberOperationException("Price must be positive");
+        return price;
     }
 
     @Override
     public String toString() {
+        BigInteger kilocalories;
+        BigDecimal price;
+        try {
+            kilocalories = calculateKilocalories();
+        } catch (NegativeNumberOperationException ex) {
+            kilocalories = BigInteger.ZERO;
+        }
+
+        try {
+            price = calculatePrice();
+        } catch (NegativeNumberOperationException ex) {
+            price = BigDecimal.ZERO;
+        }
+
         return new StringBuilder(Pork.class.getSimpleName())
                 .append(" ")
                 .append(getName())
@@ -60,10 +81,10 @@ public class Pork extends Item implements Edible {
                 .append("kg (")
                 .append(getCategory().toString())
                 .append(". Calories: ")
-                .append(calculateKilocalories())
+                .append(kilocalories)
                 .append(" kcal")
                 .append(". Price: ")
-                .append(calculatePrice())
+                .append(price)
                 .append(" ")
                 .append(Main.CURRENCY_UNIT)
                 .append(" (selling price: ")
