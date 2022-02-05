@@ -1,6 +1,7 @@
 package hr.java.production.main;
 
 import hr.java.production.enums.City;
+import hr.java.production.enums.StatusZadatka;
 import hr.java.production.exception.MultipleCategoryNamesException;
 import hr.java.production.model.*;
 import hr.java.production.sort.ProductionSorter;
@@ -10,8 +11,16 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static hr.java.production.utils.InputUtils.getForValidInput;
+import static hr.java.production.utils.InputUtils.getStringInput;
 
 /**
  * Runs app and contains main operations about app.
@@ -36,6 +45,42 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         Category[] categories = getCategoryInputs(scanner);
         Set<Item> items = getItemInputs(scanner, Arrays.asList(categories));
+
+        List<Zadatak> tasks = new ArrayList<>();
+        int selection = 0;
+        while(selection != -1) {
+            System.out.println("Odaberite akciju:");
+            System.out.println("\t1. Kreiraj zadatak");
+            System.out.println("\t2. Otkaži zadatak");
+            System.out.println("\t3. Ispis statitstike zadataka prema statusima");
+            System.out.println("\t-1. Završi program");
+            System.out.print("Odabir: ");
+
+            selection = scanner.nextInt();
+
+            switch (selection) {
+                case 1:
+                    Zadatak zadatak = createTask(scanner, tasks, items);
+                    tasks.add(zadatak);
+                    System.out.println(tasks);
+                    break;
+                case 2:
+                    cancelTask(scanner, tasks);
+                    System.out.println(tasks);
+                    break;
+                case 3:
+                    printStatistics(tasks);
+                    break;
+                case -1:
+                    break;
+                default:
+                    System.out.println("Pogrešan unos, molimo ponovite..");
+            }
+        }
+
+
+        /*Category[] categories = getCategoryInputs(scanner);
+        Set<Item> items = getItemInputs(scanner, Arrays.asList(categories));
         Factory[] factories = getFactoryInputs(scanner, items);
         Store[] stores = getStoreInputs(scanner, items);
 
@@ -51,7 +96,51 @@ public class Main {
         System.out.println();
         printAndSortItemsByCategories(items);
         System.out.println();
-        printCheapestAndMostExpensiveEdibleTechnical(items);
+        printCheapestAndMostExpensiveEdibleTechnical(items); */
+    }
+
+    private static void printStatistics(List<Zadatak> tasks) {
+        System.out.println("Statistika zadataka (ukupno " + tasks.size() + "): ");
+        long uIzradiCount = tasks.stream()
+                .filter(zadatak1 -> zadatak1.getStatusZadatka() == StatusZadatka.U_IZRADI).count();
+        long zaIzraduCount = tasks.stream()
+                .filter(zadatak1 -> zadatak1.getStatusZadatka() == StatusZadatka.ZA_IZRADU).count();
+        long izradjenoCount = tasks.stream()
+                .filter(zadatak1 -> zadatak1.getStatusZadatka() == StatusZadatka.IZRADJENO).count();
+            System.out.println("\t- ZA_IZRADU: " + zaIzraduCount);
+            System.out.println("\t- U_IZRADI: " + uIzradiCount);
+            System.out.println("\t- IZRADJENO: " + izradjenoCount);
+    }
+
+    private static void cancelTask(Scanner scanner, List<Zadatak> tasks) {
+        Zadatak zadatak = InputUtils.getListSelectionInput(scanner, 1, Zadatak.class, tasks, false);
+        zadatak.setStatusZadatka(StatusZadatka.IZRADJENO);
+    }
+
+    private static Zadatak createTask(Scanner scanner, List<Zadatak> tasks, Set<Item> items) {
+        long brojZadatka = InputUtils.getNumberInput(scanner, tasks.size(), "broj zadatka").longValue();
+        Set<Item> selectedItems = new HashSet<>(InputUtils.getListSelectionInputs(scanner,
+                tasks.size()-1, Zadatak.class, items.stream().toList()));
+
+        scanner.nextLine();
+        LocalDateTime localDateTime = null;
+        while (localDateTime == null) {
+            try {
+                //System.out.print("Unesite datum i vrijeme pocetka za " + tasks.size() + ". zadatak: ");
+                String localDateString = InputUtils.getStringInput(scanner, "Unesite pocetak zadatka: ");
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+                formatter = formatter.withLocale(Locale.getDefault());
+                localDateTime = LocalDateTime.parse(localDateString, formatter);
+            } catch (DateTimeParseException e) {
+                System.out.println("Pogresan pocetak, molimo ponovite..");
+            }
+        }
+
+        Zadatak zadatak = new Zadatak(brojZadatka, localDateTime, selectedItems);
+        if(zadatak.getDatumPocetkaIzrade().isBefore(zadatak.getDatumKreiranja()))
+            zadatak.setStatusZadatka(StatusZadatka.U_IZRADI);
+        return zadatak;
     }
 
     /**
@@ -74,7 +163,7 @@ public class Main {
                     System.out.println("[ERROR] " + ex.getMessage() + ". Please enter category name with unique name..");
                 }
             } while (categoryName == null);
-            String description = InputUtils.getStringInput(scanner, i, "category description: ");
+            String description = getStringInput(scanner, i, "category description: ");
             categories[i] = new Category(categoryName, description);
         }
         return categories;
@@ -93,7 +182,7 @@ public class Main {
     private static String getCategoryNameInput(Scanner scanner, int i, Category[] categories)
             throws MultipleCategoryNamesException {
 
-        String categoryName = InputUtils.getStringInput(scanner, i, "category name: ");
+        String categoryName = getStringInput(scanner, i, "category name: ");
         for(Category category : categories) {
             if(category != null && category.getName().equals(categoryName))
                 throw new MultipleCategoryNamesException("Multiple categories with name '" + categoryName + "'");
@@ -123,7 +212,7 @@ public class Main {
                         Arrays.asList(Pasta.class.getSimpleName(), Pork.class.getSimpleName()), false);
             }
 
-            String name = InputUtils.getStringInput(scanner, i, "item name: ");
+            String name = getStringInput(scanner, i, "item name: ");
             Category category = InputUtils.getListSelectionInput(scanner, i, Item.class, categories, false);
             BigDecimal productionCost = InputUtils.getNumberInput(scanner, i, "item production cost: ");
             BigDecimal sellingPrice = InputUtils.getNumberInput(scanner, i, "item selling price: ");
@@ -170,7 +259,7 @@ public class Main {
     private static Factory[] getFactoryInputs(Scanner scanner, Set<Item> items) {
         Factory[] factories = new Factory[NUM_FACTORY_INPUTS];
         for(int i = 0; i < NUM_FACTORY_INPUTS; i++) {
-            String name = InputUtils.getStringInput(scanner, i, "factory name: ");
+            String name = getStringInput(scanner, i, "factory name: ");
             Address address = getAddressInput(scanner, i, Factory.class);
             Set<Item> selectedItems = new HashSet<>(InputUtils.getListSelectionInputs(scanner, i, Factory.class, items.stream().toList()));
             factories[i] = new Factory(name, address, selectedItems);
@@ -189,8 +278,8 @@ public class Main {
      */
     private static Address getAddressInput(Scanner scanner, int i, Class<?> addressForClass) {
         String addressFor = addressForClass.getSimpleName().toLowerCase();
-        String street = InputUtils.getStringInput(scanner, i, addressFor + " address street: ");
-        String houseNumber = InputUtils.getStringInput(scanner, i, addressFor + " house number: ");
+        String street = getStringInput(scanner, i, addressFor + " address street: ");
+        String houseNumber = getStringInput(scanner, i, addressFor + " house number: ");
         City city = InputUtils.getListSelectionInput(scanner, i, City.class, Arrays.asList(City.values()), false);
         return new Address.Builder()
                 .street(street)
@@ -209,8 +298,8 @@ public class Main {
     private static Store[] getStoreInputs(Scanner scanner, Set<Item> items) {
         Store[] stores = new Store[NUM_STORE_INPUTS];
         for(int i = 0; i < NUM_STORE_INPUTS; i++) {
-            String name = InputUtils.getStringInput(scanner, i, "store name: ");
-            String webAddress = InputUtils.getStringInput(scanner, i, "store web address: ");
+            String name = getStringInput(scanner, i, "store name: ");
+            String webAddress = getStringInput(scanner, i, "store web address: ");
             Set<Item> selectedItems = new HashSet<>(InputUtils.getListSelectionInputs(scanner, i, Store.class, items.stream().toList()));
             stores[i] = new Store(name, webAddress, selectedItems);
         }

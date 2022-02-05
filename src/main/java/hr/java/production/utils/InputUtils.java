@@ -154,7 +154,7 @@ public class InputUtils {
      * @param boundsMax maximum number value allowed, inclusive.
      * @return input value if input is valid, otherwise display error and repeat entry.
      */
-    private static BigDecimal getForValidInput(Scanner scanner, String message, BigDecimal input,
+    public static BigDecimal getForValidInput(Scanner scanner, String message, BigDecimal input,
                                                boolean exitable, int boundsMin, int boundsMax) {
         if (input.intValue() >= boundsMin && input.intValue() <= boundsMax)
             return input;
